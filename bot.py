@@ -2,12 +2,13 @@ import datetime
 import requests
 import json
 import os
+import random
 from vk import Vk
 
 #config
 
 access_token = os.environ.get('access_token', '')
-group_id = os.environ.get('group_id', '')
+group_id = int(os.environ.get('group_id', 0))
 
 vk = Vk(access_token)
     
@@ -26,6 +27,8 @@ server = result['response']['server']
 key = result['response']['key']
 ts = result['response']['ts']
 
+max_int = 2147483647 #on 32bit platform. hard code
+
 while True:    
     event = vk.vk_longpoll_listen(server, key, ts).json()
     print(datetime.datetime.now().isoformat(), ' vk_longpoll_listen_as_json=', event)
@@ -35,6 +38,8 @@ while True:
     if update['type'] == 'message_new':
         if update['group_id'] == group_id:
             request = update['object']['text']
+            print("==>responce")
+            random_id = random.randint(0, max_int)
             if request == "привет":
                 resp = write_msg(update['object']['from_id'], "Хай.", random_id)
                 print(datetime.datetime.now().isoformat(), 'send message result =', resp.text)
