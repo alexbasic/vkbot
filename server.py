@@ -1,29 +1,37 @@
-#import vkbot
 import os
 from flask import Flask, request
+from tools import EventProcessor
+from message_new_handler import MessageNewHandler
+from vk import Vk
+#import logging
 
-#bot = vkbot.VkBot(bots token)
+access_token = os.environ.get('access_token', '')
+group_id = int(os.environ.get('group_id', 0))
+server_confirmation_key = os.environ.get('server_confirmation_key', '')
+
 server = Flask(__name__)
+event_processor = EventProcessor(group_id)
+vk = Vk(access_token)
+message_new_handler = MessageNewHandler(vk)
 
-
-#@bot.message_handler(commands=['start'])
-#def start(message):
-#    bot.reply_to(message, 'Hello, ' + message.from_user.first_name)
-
-#@bot.message_handler(func=lambda message: True, content_types=['text'])
-#def echo_message(message):
-#    bot.reply_to(message, message.text)
-
-
-#@server.route("/bots token", methods=['POST'])
-#def getMessage():
-#    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
-#    return "!", 200
+@event_processor.confirmation()
+def confirm_handler_fn(event):
+    #nonlocal server_confirmation_key
+    return server_confirmation_key, 200
+    
+@event_processor.message_new()
+def message_new_handler_fn(event):
+    #nonlocal message_new_handler
+    message_new_handler.handle(event)
+    return "ok", 200
 
 @server.route("/vkhook")
 def webhook():
-    #bot.remove_webhook()
-    #bot.set_webhook(url="https://ссылка на приложение/токен вашего бота")
-    return "its ok"
+    #nonlocal event_processor
+    if (not request.is_json): raise Exception("request is not json")
+    content = request.get_json()
+    event_processor.Process(content)
+    return "ok", 200
 
+#server.logger.setLevel(logging.CRITICAL)
 server.run(host="0.0.0.0", port=os.environ.get('PORT', 5000))
