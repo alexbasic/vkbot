@@ -1,4 +1,4 @@
-from tools import EventProcessor
+from tools import EventProcessor, UnexpectedEventException
 import unittest
 from message_new_handler import MessageNewHandler
 import types
@@ -21,6 +21,35 @@ class EventProcessorTest(unittest.TestCase):
             actual = event
         self.event_processor.process(data)
         self.assertEqual(actual, expected)
+    
+    def test_must_assept_secret(self):
+        secret = "1234567890"
+        need_secret = True
+        data = {"type": "confirmation", "group_id": self.group_id, "object": None, "secret": secret}
+        expected = data
+        actual = None
+        event_processor = EventProcessor(self.group_id, need_secret, secret)
+        @event_processor.confirmation()
+        def confirm_handler(event):
+            nonlocal actual
+            actual = event
+        event_processor.process(data)
+        self.assertEqual(actual, expected)
+    
+    @unittest.expectedFailure
+    def test_must_not_assept_secret(self):
+        secret = "1234567890"
+        remote_secret = "4234567894"
+        need_secret = True
+        data = {"type": "confirmation", "group_id": self.group_id, "object": None, "secret": remote_secret}
+        expected = data
+        actual = None
+        event_processor = EventProcessor(self.group_id, need_secret, secret)
+        @event_processor.confirmation()
+        def confirm_handler(event):
+            nonlocal actual
+            actual = event
+        event_processor.process(data)
         
     def test_message_new(self):
         data = {"type": "message_new", "group_id": self.group_id, "object": None}
@@ -32,6 +61,17 @@ class EventProcessorTest(unittest.TestCase):
             actual = event
         self.event_processor.process(data)
         self.assertEqual(actual, expected)
+    
+    def test_unexpected_message(self):
+        data = {"type": "any_other_type", "group_id": self.group_id, "object": None}
+        expected = "UnexpectedEventException('Unexpected event: ', event)"
+        actual = None
+        @self.event_processor.error()
+        def error_fn_handler(error):
+            nonlocal actual
+            actual = error
+        self.event_processor.process(data)
+        self.assertIsInstance(actual, UnexpectedEventException)
 
 class VkStub:
     result = None

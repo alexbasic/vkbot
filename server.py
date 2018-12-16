@@ -25,6 +25,12 @@ def message_new_handler_fn(event):
     message_new_handler.handle(event)
     return "ok"
 
+@event_processor.error()
+def error_handler_fn(error):
+    #print(error)
+    server.logger.warning(error)
+    return "ok"
+
 @server.route("/vkhook", methods = ['POST'])
 def webhook():
     if (not request.is_json): raise Exception("request is not json")
