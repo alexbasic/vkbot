@@ -12,6 +12,7 @@ class EventProcessor:
         group_id = event['group_id']
         event_type = event['type']
         if self.need_secret:
+            if 'secret' not in event.keys(): raise Exception("Remote side must send secret")
             self.verify_secret(remote_secret= event['secret'] , my_secret= self.secret)
         if (group_id != self._group_id):
             raise Exception("not supported group_id: {0}".format(group_id))
