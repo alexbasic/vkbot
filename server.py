@@ -8,9 +8,10 @@ from vk import Vk
 access_token = os.environ.get('access_token', '')
 group_id = int(os.environ.get('group_id', 0))
 server_confirmation_key = os.environ.get('server_confirmation_key', None)
+secret = os.environ.get('secret', '')
 
 server = Flask(__name__)
-event_processor = EventProcessor(group_id)
+event_processor = EventProcessor(group_id, True, secret)
 vk = Vk(access_token)
 message_new_handler = MessageNewHandler(vk)
 
