@@ -8,9 +8,10 @@ class EventProcessor:
         if (group_id != self._group_id):
             raise Exception("not supported group_id: {0}".format(group_id))
         if (event_type == "confirmation"):
-            self._confirmation_fn(event)
+            result = self._confirmation_fn(event)
+            return result
         if (event_type == "message_new"):
-            self._message_new_fn(event)
+            return self._message_new_fn(event)
     
     def confirmation(self):
         def decorator(f):
